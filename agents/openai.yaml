@@ -1,0 +1,17 @@
+interface:
+  display_name: rust simd intrinsics
+  short_description: Design, implement, review, debug, benchmark, and port performance-critical
+    Rust SIMD code across x86/x86_64 SSE (SSE1), SSE2, AVX and AVX2, and Arm NEON.
+    Use for auto-vectorization, runtime feature dispatch, std::arch intrinsics, fearless_simd,
+    wide, or nightly std::simd; and for byte scanning, compression matchers, image/audio/DSP
+    kernels, reductions, masks, widening, saturation, and vectorized transforms. Do
+    not trigger for ordinary non-hot code where SIMD has not been justified by profiling.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
