@@ -60,21 +60,21 @@ Rules:
 - Use explicit overflow operations in scalar-looking integer code.
 - Inspect binary size. Each dispatched version duplicates code.
 
-### Pattern B: native-width explicit vectors
+### Pattern B: fixed-width explicit vectors with an explicit scalar tail
 
 ```rust
-use fearless_simd::{dispatch, prelude::*, Level};
+use fearless_simd::{dispatch, prelude::*, u32x4, Level};
 
 #[inline(always)]
 fn double_explicit<S: Simd>(simd: S, values: &mut [u32]) {
-    let mut chunks = values.chunks_exact_mut(S::u32s::N);
+    let (chunks, tail) = values.as_chunks_mut::<4>();
 
-    for chunk in &mut chunks {
-        let x = S::u32s::from_slice(simd, chunk);
-        (x + x).store_slice(chunk);
+    for chunk in chunks {
+        let x = u32x4::load_array_ref(simd, chunk);
+        (x + x).store_array(chunk);
     }
 
-    for value in chunks.into_remainder() {
+    for value in tail {
         *value = value.wrapping_mul(2);
     }
 }
@@ -85,7 +85,15 @@ pub fn double(values: &mut [u32]) {
 }
 ```
 
-This form adapts the lane count to the selected SIMD level. The scalar remainder preserves bounds safety and exact wrapping semantics.
+`as_chunks_mut` exposes full chunks as `&mut [u32; 4]`, which is the exact
+array type accepted by `u32x4::load_array_ref` and `store_array`. Each full
+chunk is processed explicitly as SIMD; the tail stays ordinary scalar Rust.
+
+The analogous native-width loader is `S::u32s::load_array_ref`. Its array
+length varies with `S`, so standard `slice::as_chunks` cannot express that
+length in a generic function on stable Rust. Use `chunks_exact` plus
+`S::u32s::from_slice` when native width is more important than a fixed-array
+boundary.
 
 ### Pattern C: dispatch once and reuse
 
@@ -124,32 +132,63 @@ pub fn add_f32(out: &mut [f32], a: &[f32], b: &[f32]) {
     assert_eq!(out.len(), a.len());
     assert_eq!(out.len(), b.len());
 
-    let mut out_chunks = out.chunks_exact_mut(8);
-    let mut a_chunks = a.chunks_exact(8);
-    let mut b_chunks = b.chunks_exact(8);
+    let (out_chunks, out_tail) = out.as_chunks_mut::<8>();
+    let (a_chunks, a_tail) = a.as_chunks::<8>();
+    let (b_chunks, b_tail) = b.as_chunks::<8>();
 
     for ((dst, x), y) in out_chunks
-        .by_ref()
-        .zip(a_chunks.by_ref())
-        .zip(b_chunks.by_ref())
+        .iter_mut()
+        .zip(a_chunks)
+        .zip(b_chunks)
     {
-        let xv = f32x8::new(x.try_into().expect("exact chunk"));
-        let yv = f32x8::new(y.try_into().expect("exact chunk"));
-        dst.copy_from_slice(&(xv + yv).to_array());
+        let xv = f32x8::new(*x);
+        let yv = f32x8::new(*y);
+        *dst = (xv + yv).to_array();
     }
 
-    for ((dst, &x), &y) in out_chunks
-        .into_remainder()
-        .iter_mut()
-        .zip(a_chunks.remainder())
-        .zip(b_chunks.remainder())
-    {
+    for ((dst, &x), &y) in out_tail.iter_mut().zip(a_tail).zip(b_tail) {
         *dst = x + y;
     }
 }
 ```
 
-The example favors a plainly safe memory boundary. Check assembly: the array conversions normally optimize away, but this is an optimization result rather than a source-level guarantee.
+The full arrays are the SIMD path and the remainder slices are deliberately
+scalar. Check assembly: the array conversions normally optimize away, but this
+is an optimization result rather than a source-level guarantee.
+
+### Single-block `first_chunk` pattern
+
+Use `first_chunk` when only the first complete block should be vectorized and
+all remaining elements should stay scalar:
+
+```rust
+use wide::f32x8;
+
+pub fn add_first_block(out: &mut [f32], a: &[f32], b: &[f32]) {
+    assert_eq!(out.len(), a.len());
+    assert_eq!(out.len(), b.len());
+
+    let vectorized = match (
+        out.first_chunk_mut::<8>(),
+        a.first_chunk::<8>(),
+        b.first_chunk::<8>(),
+    ) {
+        (Some(dst), Some(x), Some(y)) => {
+            *dst = (f32x8::new(*x) + f32x8::new(*y)).to_array();
+            8
+        }
+        _ => 0,
+    };
+
+    for ((dst, &x), &y) in out[vectorized..]
+        .iter_mut()
+        .zip(&a[vectorized..])
+        .zip(&b[vectorized..])
+    {
+        *dst = x + y;
+    }
+}
+```
 
 ### Mask/select pattern
 
@@ -208,15 +247,14 @@ pub fn add_f32(out: &mut [f32], a: &[f32], b: &[f32]) {
     assert_eq!(out.len(), a.len());
     assert_eq!(out.len(), b.len());
 
-    let vector_len = out.len() / 8 * 8;
-    let (out_head, out_tail) = out.split_at_mut(vector_len);
-    let (a_head, a_tail) = a.split_at(vector_len);
-    let (b_head, b_tail) = b.split_at(vector_len);
+    let (out_chunks, out_tail) = out.as_chunks_mut::<8>();
+    let (a_chunks, a_tail) = a.as_chunks::<8>();
+    let (b_chunks, b_tail) = b.as_chunks::<8>();
 
-    for offset in (0..vector_len).step_by(8) {
-        let x = F32x8::from_slice(&a_head[offset..]);
-        let y = F32x8::from_slice(&b_head[offset..]);
-        (x + y).copy_to_slice(&mut out_head[offset..]);
+    for ((dst, x), y) in out_chunks.iter_mut().zip(a_chunks).zip(b_chunks) {
+        let x = F32x8::from_array(*x);
+        let y = F32x8::from_array(*y);
+        *dst = (x + y).to_array();
     }
 
     for ((dst, &x), &y) in out_tail.iter_mut().zip(a_tail).zip(b_tail) {
@@ -225,7 +263,9 @@ pub fn add_f32(out: &mut [f32], a: &[f32], b: &[f32]) {
 }
 ```
 
-`from_slice` and `copy_to_slice` require enough elements. Splitting the vectorized prefix makes that condition visible.
+`as_chunks` makes the vectorized arrays and scalar tail distinct in the type
+system, so every full array is processed as SIMD without indexing a slice
+window.
 
 ### Masked-tail pattern
 
