@@ -238,9 +238,7 @@ mod x86_impl {
         while i + LANES <= bytes.len() {
             // SAFETY: the loop condition proves a complete 32-byte load is in
             // bounds. `_mm256_loadu_si256` permits unaligned addresses.
-            let block = unsafe {
-                _mm256_loadu_si256(bytes.as_ptr().add(i).cast::<__m256i>())
-            };
+            let block = unsafe { _mm256_loadu_si256(bytes.as_ptr().add(i).cast::<__m256i>()) };
             let equal = _mm256_cmpeq_epi8(block, needle);
             let mask = _mm256_movemask_epi8(equal) as u32;
             if mask != 0 {
@@ -298,12 +296,7 @@ mod aarch64_impl {
 
         while i + LANES <= out.len() {
             // SAFETY: each pointer covers four in-bounds initialized `f32`s.
-            let (x, y) = unsafe {
-                (
-                    vld1q_f32(a.as_ptr().add(i)),
-                    vld1q_f32(b.as_ptr().add(i)),
-                )
-            };
+            let (x, y) = unsafe { (vld1q_f32(a.as_ptr().add(i)), vld1q_f32(b.as_ptr().add(i))) };
             let sum = vaddq_f32(x, y);
             // SAFETY: the destination covers four in-bounds `f32`s.
             unsafe { vst1q_f32(out.as_mut_ptr().add(i), sum) };
@@ -323,12 +316,7 @@ mod aarch64_impl {
 
         while i + LANES <= out.len() {
             // SAFETY: each pointer covers four in-bounds initialized `u32`s.
-            let (x, y) = unsafe {
-                (
-                    vld1q_u32(a.as_ptr().add(i)),
-                    vld1q_u32(b.as_ptr().add(i)),
-                )
-            };
+            let (x, y) = unsafe { (vld1q_u32(a.as_ptr().add(i)), vld1q_u32(b.as_ptr().add(i))) };
             let sum = vaddq_u32(x, y);
             // SAFETY: the destination covers four in-bounds `u32`s.
             unsafe { vst1q_u32(out.as_mut_ptr().add(i), sum) };
@@ -384,12 +372,9 @@ mod tests {
     fn f32_dispatch_matches_scalar_for_offsets_and_tails() {
         for offset in 0..5 {
             for len in 0..70 {
-                let storage_a: Vec<f32> = (0..len + offset)
-                    .map(|i| i as f32 * 0.5 - 7.0)
-                    .collect();
-                let storage_b: Vec<f32> = (0..len + offset)
-                    .map(|i| i as f32 * -0.125 + 2.0)
-                    .collect();
+                let storage_a: Vec<f32> = (0..len + offset).map(|i| i as f32 * 0.5 - 7.0).collect();
+                let storage_b: Vec<f32> =
+                    (0..len + offset).map(|i| i as f32 * -0.125 + 2.0).collect();
                 let a = &storage_a[offset..];
                 let b = &storage_b[offset..];
                 let expected: Vec<f32> = a.iter().zip(b).map(|(&x, &y)| x + y).collect();
@@ -410,11 +395,7 @@ mod tests {
             let b: Vec<u32> = (0..len)
                 .map(|i| if i % 5 == 0 { 7 } else { u32::MAX - i as u32 })
                 .collect();
-            let expected: Vec<u32> = a
-                .iter()
-                .zip(&b)
-                .map(|(&x, &y)| x.wrapping_add(y))
-                .collect();
+            let expected: Vec<u32> = a.iter().zip(&b).map(|(&x, &y)| x.wrapping_add(y)).collect();
             let mut out = vec![0; len];
             add_u32_wrapping(&mut out, &a, &b);
             assert_eq!(out, expected);

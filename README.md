@@ -1,5 +1,7 @@
 # Rust SIMD Intrinsics — Agent Skill
 
+[![skills.sh](https://skills.sh/b/Mnwa/rust-simd-intrinsics)](https://skills.sh/Mnwa/rust-simd-intrinsics)
+
 A reusable Agent Skills package for designing, implementing, reviewing, and benchmarking optimized Rust SIMD code across:
 
 - x86/x86_64 SSE (SSE1), SSE2, AVX, and AVX2;
@@ -12,7 +14,13 @@ A reusable Agent Skills package for designing, implementing, reviewing, and benc
 
 ## Install
 
-Copy the `rust-simd-intrinsics` directory into the skills directory used by your LLM agent. Keep the directory name unchanged because it matches the `name` in `SKILL.md`.
+Install with the [skills CLI](https://skills.sh/docs/cli):
+
+```bash
+npx skills add Mnwa/rust-simd-intrinsics
+```
+
+Alternatively, copy the `rust-simd-intrinsics` directory into the skills directory used by your LLM agent. Keep the directory name unchanged because it matches the `name` in `SKILL.md`.
 
 ## Layout
 
