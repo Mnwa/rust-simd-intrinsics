@@ -160,8 +160,8 @@ def main()->int:
     args=parser.parse_args()
     try:
         top=subprocess.run(['git','rev-parse','--show-toplevel'],cwd=ROOT,text=True,capture_output=True,check=True).stdout.strip()
-        if Path(top).resolve()!=ROOT:
-            raise ValueError('run this script from the skill checkout, not a nested or unrelated repository')
+        if not ROOT.is_relative_to(Path(top).resolve()):
+            raise ValueError('the skill must be inside its Git checkout')
         # Reject symlinks before reading any existing integration target.
         for relative in ['SKILL.md','.gitignore','scripts/verify.sh','scripts/emit-asm.sh',*SUPPLEMENTS]:
             check_path(ROOT,ROOT/relative)

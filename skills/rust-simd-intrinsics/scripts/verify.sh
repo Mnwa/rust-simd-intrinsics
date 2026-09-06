@@ -6,6 +6,7 @@ EXAMPLES="$ROOT/examples/Cargo.toml"
 
 required=(
   "SKILL.md"
+  "LICENSE"
   "README.md"
   "references/platforms-and-instructions.md"
   "references/auto-vectorization.md"

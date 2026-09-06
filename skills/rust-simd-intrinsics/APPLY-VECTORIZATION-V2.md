@@ -1,7 +1,7 @@
 # Apply and validate the vectorization v2 upgrade
 
-Run these commands from a real, locally available checkout of
-`Mnwa/rust-simd-intrinsics`. Python 3.11 or newer and Git are needed for integration.
+Run these commands from `skills/rust-simd-intrinsics/` inside a real, locally
+available checkout of `Mnwa/rust-simd-intrinsics`. Python 3.11 or newer and Git are needed for integration.
 Rust/Cargo, rustup-managed stable/nightly toolchains and network access for the
 initial dependency resolution are needed for the Rust verification steps.
 

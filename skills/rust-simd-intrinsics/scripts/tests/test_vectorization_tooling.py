@@ -67,14 +67,14 @@ class IntegrationTests(unittest.TestCase):
             for name in ['scripts/verify.sh','scripts/emit-asm.sh']:
                 subprocess.run(['bash','-n',str(root/name)],check=True)
 
-    def make_cli_fixture(self, root):
-        subprocess.run(['git','init','-q'],cwd=root,check=True)
+    def make_cli_fixture(self, root, repo=None):
+        subprocess.run(['git','init','-q'],cwd=repo or root,check=True)
         (root/'SKILL.md').write_text('---\nname: synthetic-fixture\n---\n# Original\nRetain this text.\n')
         (root/'scripts').mkdir()
         (root/'scripts/verify.sh').write_text('#!/bin/sh\nexit 0\n')
         subprocess.run(['git','add','.'],cwd=root,check=True)
         subprocess.run(['git','-c','user.name=Fixture','-c','user.email=fixture@example.invalid',
-                        'commit','-qm','synthetic integration fixture'],cwd=root,check=True)
+                        '-c','commit.gpgsign=false','commit','-qm','synthetic integration fixture'],cwd=root,check=True)
         for name in ['scripts/integrate-vectorization-v2.py','scripts/verify-vectorization.py',
                      'scripts/emit-vectorization-asm.py','references/vectorization-v2.md']:
             target=root/name; target.parent.mkdir(parents=True,exist_ok=True)
@@ -97,6 +97,25 @@ class IntegrationTests(unittest.TestCase):
             (root/'SKILL.md').write_text((root/'SKILL.md').read_text()+'Local uncommitted edit.\n')
             before=(root/'SKILL.md').read_bytes()
             result=subprocess.run([sys.executable,str(script),'--write'],cwd=root,text=True,capture_output=True)
+            self.assertNotEqual(result.returncode,0)
+            self.assertIn('dirty',result.stderr)
+            self.assertEqual(before,(root/'SKILL.md').read_bytes())
+
+    def test_cli_integrates_nested_skill_and_preserves_dirty_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo=Path(directory)
+            root=repo/'skills/synthetic-fixture'
+            root.mkdir(parents=True)
+            script=self.make_cli_fixture(root,repo)
+            preview=subprocess.run([sys.executable,str(script)],cwd=repo,text=True,capture_output=True)
+            self.assertEqual(preview.returncode,0,preview.stderr)
+            subprocess.run(['git','apply','--check','-'],cwd=root,input=preview.stdout,text=True,check=True,capture_output=True)
+            first=subprocess.run([sys.executable,str(script),'--write'],cwd=repo,text=True,capture_output=True)
+            self.assertEqual(first.returncode,0,first.stderr)
+            self.assertIn(integration.START,(root/'SKILL.md').read_text())
+            (root/'SKILL.md').write_text('---\nname: synthetic-fixture\n---\n# Local edit\n')
+            before=(root/'SKILL.md').read_bytes()
+            result=subprocess.run([sys.executable,str(script),'--write'],cwd=repo,text=True,capture_output=True)
             self.assertNotEqual(result.returncode,0)
             self.assertIn('dirty',result.stderr)
             self.assertEqual(before,(root/'SKILL.md').read_bytes())

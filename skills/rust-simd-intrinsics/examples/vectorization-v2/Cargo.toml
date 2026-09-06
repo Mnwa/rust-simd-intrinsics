@@ -3,6 +3,7 @@ name = "simd-vectorization-recipes"
 version = "0.1.0"
 edition = "2021"
 publish = false
+license = "MIT"
 
 # Isolated from any parent example workspace and its dependency versions.
 [workspace]

@@ -1,2 +1,2 @@
-/examples/target/
-/examples/Cargo.lock
+__pycache__/
+.artifacts/

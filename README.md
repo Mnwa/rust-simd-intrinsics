@@ -2,71 +2,36 @@
 
 [![skills.sh](https://skills.sh/b/Mnwa/rust-simd-intrinsics)](https://skills.sh/Mnwa/rust-simd-intrinsics)
 
-A reusable Agent Skills package for designing, implementing, reviewing, and benchmarking optimized Rust SIMD code across:
-
-- x86/x86_64 SSE (SSE1), SSE2, AVX, and AVX2;
-- Arm/AArch64 NEON (Advanced SIMD);
-- LLVM auto-vectorization;
-- `std::arch` intrinsics;
-- `fearless_simd`;
-- `wide`;
-- nightly portable `std::simd`.
+Guidance and executable examples for designing, reviewing, and benchmarking Rust
+SIMD code across x86/x86_64 and Arm NEON, including auto-vectorization,
+`std::arch`, `fearless_simd`, `wide`, and nightly `std::simd`.
 
 ## Install
-
-Install with the [skills CLI](https://skills.sh/docs/cli):
 
 ```bash
 npx skills add Mnwa/rust-simd-intrinsics
 ```
 
-Alternatively, copy the `rust-simd-intrinsics` directory into the skills directory used by your LLM agent. Keep the directory name unchanged because it matches the `name` in `SKILL.md`.
+For manual installation, copy [skills/rust-simd-intrinsics](skills/rust-simd-intrinsics)
+into your agent's skills directory. Keep the folder name unchanged.
 
-## Layout
-
-```text
-rust-simd-intrinsics/
-├── SKILL.md
-├── README.md
-├── references/
-│   ├── platforms-and-instructions.md
-│   ├── auto-vectorization.md
-│   ├── libraries.md
-│   ├── algorithm-cookbook.md
-│   ├── correctness-benchmarking.md
-│   └── source-index.md
-├── examples/
-│   ├── Cargo.toml
-│   ├── README.md
-│   └── src/
-└── scripts/
-    ├── verify.sh
-    └── emit-asm.sh
-```
-
-`SKILL.md` is the concise operational specification. References are loaded progressively for architecture, crate, algorithm, and verification details. The example crate contains safe scalar, explicit portable, and architecture-specific templates.
-
-## Design Principles
-
-- Scalar oracle and profiling before explicit SIMD.
-- Exact semantics for overflow, floating point, masks, and tails.
-- Runtime feature dispatch outside hot loops.
-- Scalar fallback for heterogeneous deployment.
-- Small unsafe boundaries with local safety proofs.
-- Assembly inspection and real benchmark evidence before performance claims.
-
-## Toolchains
-
-The core and `wide`/`fearless_simd` examples target stable Rust; the pinned `fearless_simd` 0.7.0 example requires Rust 1.89 or newer. The `std::simd` module is feature-gated and requires nightly Rust with `portable_simd`.
+See the [skill documentation](skills/rust-simd-intrinsics/README.md) for the
+layout, toolchains, and design principles.
 
 ## Validate
 
+Run from the repository root:
+
 ```bash
-./scripts/verify.sh
+gh skill publish --dry-run
+./skills/rust-simd-intrinsics/scripts/verify.sh
 ```
 
-The script validates the package structure and, when Cargo is installed, checks/tests the stable examples and optional library examples. Nightly portable SIMD checks are attempted only when a nightly toolchain is present.
+The skill lives in a named subdirectory so GitHub CLI can validate its name.
+Run `gh skill publish --dry-run` from the repository root; passing the skill
+directory itself triggers the [root-level name validation issue](https://github.com/cli/cli/issues/13284)
+in GitHub CLI 2.97.0.
 
-## Version Snapshot
+## License
 
-Documentation and library observations were last reviewed on 2026-08-23. See `references/source-index.md` for primary sources and the exact snapshot notes.
+[MIT](LICENSE), copyright 2026 Mnwa. A copy is bundled with the skill.

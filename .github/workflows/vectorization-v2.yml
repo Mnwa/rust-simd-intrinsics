@@ -3,18 +3,18 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - 'examples/vectorization-v2/**'
-      - 'scripts/*vectorization*'
-      - 'scripts/tests/**'
-      - 'evals/vectorization-v2/**'
-      - 'references/**'
+      - 'skills/rust-simd-intrinsics/examples/vectorization-v2/**'
+      - 'skills/rust-simd-intrinsics/scripts/*vectorization*'
+      - 'skills/rust-simd-intrinsics/scripts/tests/**'
+      - 'skills/rust-simd-intrinsics/evals/vectorization-v2/**'
+      - 'skills/rust-simd-intrinsics/references/**'
       - '.github/workflows/vectorization-v2.yml'
   push:
     paths:
-      - 'examples/vectorization-v2/**'
-      - 'scripts/*vectorization*'
-      - 'scripts/tests/**'
-      - 'evals/vectorization-v2/**'
+      - 'skills/rust-simd-intrinsics/examples/vectorization-v2/**'
+      - 'skills/rust-simd-intrinsics/scripts/*vectorization*'
+      - 'skills/rust-simd-intrinsics/scripts/tests/**'
+      - 'skills/rust-simd-intrinsics/evals/vectorization-v2/**'
       - '.github/workflows/vectorization-v2.yml'
 permissions:
   contents: read
@@ -26,6 +26,9 @@ jobs:
         os: [ubuntu-24.04, ubuntu-24.04-arm]
         scope: [stable, nightly]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: skills/rust-simd-intrinsics
     steps:
       - uses: actions/checkout@v6
         with:
@@ -56,6 +59,6 @@ jobs:
           name: vectorization-${{ matrix.os }}-${{ matrix.scope }}
           include-hidden-files: true
           path: |
-            .artifacts/vectorization-v2/
-            examples/vectorization-v2/Cargo.lock
+            skills/rust-simd-intrinsics/.artifacts/vectorization-v2/
+            skills/rust-simd-intrinsics/examples/vectorization-v2/Cargo.lock
           if-no-files-found: warn
