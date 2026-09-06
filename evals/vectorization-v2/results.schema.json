@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SIMD agent evaluation attempts",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "run_id",
+      "variant",
+      "model",
+      "config_sha256",
+      "budget",
+      "toolchain",
+      "target",
+      "task_id",
+      "seed",
+      "compile_status",
+      "correctness_status",
+      "safety_violations",
+      "semantic_violations",
+      "baseline_ns",
+      "candidate_ns",
+      "decision"
+    ],
+    "properties": {
+      "run_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "model": {
+        "type": "string",
+        "minLength": 1
+      },
+      "toolchain": {
+        "type": "string",
+        "minLength": 1
+      },
+      "target": {
+        "type": "string",
+        "minLength": 1
+      },
+      "task_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "variant": {
+        "enum": [
+          "without-skill",
+          "current-skill",
+          "updated-skill"
+        ]
+      },
+      "config_sha256": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "budget": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "seed": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "compile_status": {
+        "enum": [
+          "passed",
+          "failed",
+          "skipped",
+          "unsupported"
+        ]
+      },
+      "correctness_status": {
+        "enum": [
+          "passed",
+          "failed",
+          "skipped",
+          "unsupported"
+        ]
+      },
+      "safety_violations": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "semantic_violations": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "baseline_ns": {
+        "type": [
+          "number",
+          "null"
+        ],
+        "exclusiveMinimum": 0
+      },
+      "candidate_ns": {
+        "type": [
+          "number",
+          "null"
+        ],
+        "exclusiveMinimum": 0
+      },
+      "decision": {
+        "enum": [
+          "keep-baseline",
+          "use-candidate",
+          "unresolved"
+        ]
+      },
+      "notes": {
+        "type": "string"
+      }
+    }
+  }
+}

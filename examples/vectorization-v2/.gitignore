@@ -1,0 +1,2 @@
+/target/
+# Cargo.lock is intentionally NOT ignored: generate and commit it after resolution.

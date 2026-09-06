@@ -1,0 +1,61 @@
+name: vectorization-v2
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'examples/vectorization-v2/**'
+      - 'scripts/*vectorization*'
+      - 'scripts/tests/**'
+      - 'evals/vectorization-v2/**'
+      - 'references/**'
+      - '.github/workflows/vectorization-v2.yml'
+  push:
+    paths:
+      - 'examples/vectorization-v2/**'
+      - 'scripts/*vectorization*'
+      - 'scripts/tests/**'
+      - 'evals/vectorization-v2/**'
+      - '.github/workflows/vectorization-v2.yml'
+permissions:
+  contents: read
+jobs:
+  recipes:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+        scope: [stable, nightly]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install explicit toolchain
+        env:
+          TOOLCHAIN: ${{ matrix.scope }}
+        run: rustup toolchain install "$TOOLCHAIN" --profile minimal
+      - name: Validate Python tools and mathematical models
+        run: |
+          python3 -m unittest discover -s scripts/tests -v
+          python3 scripts/test-vectorization-models.py
+      - name: Compile and execute required Rust scope
+        run: >-
+          python3 scripts/verify-vectorization.py --strict
+          --scope '${{ matrix.scope }}' --bootstrap-lock
+      - name: Capture generic codegen
+        env:
+          TOOLCHAIN: ${{ matrix.scope }}
+        run: |
+          features='fearless,wide'
+          if [ "$TOOLCHAIN" = nightly ]; then features='portable,fearless,wide'; fi
+          python3 scripts/emit-vectorization-asm.py generic --toolchain "$TOOLCHAIN" --features "$features"
+      - name: Retain reports and resolved lock
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: vectorization-${{ matrix.os }}-${{ matrix.scope }}
+          include-hidden-files: true
+          path: |
+            .artifacts/vectorization-v2/
+            examples/vectorization-v2/Cargo.lock
+          if-no-files-found: warn

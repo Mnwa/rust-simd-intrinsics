@@ -1,0 +1,21 @@
+[
+  {
+    "run_id": "EXAMPLE-NOT-MEASURED",
+    "variant": "updated-skill",
+    "model": "record-model",
+    "config_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "budget": 1,
+    "toolchain": "not-run",
+    "target": "not-run",
+    "task_id": "V01",
+    "seed": 0,
+    "compile_status": "skipped",
+    "correctness_status": "skipped",
+    "safety_violations": 0,
+    "semantic_violations": 0,
+    "baseline_ns": null,
+    "candidate_ns": null,
+    "decision": "unresolved",
+    "notes": "Schema demonstration only. No LLM, compiler or benchmark was run."
+  }
+]

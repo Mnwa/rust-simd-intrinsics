@@ -1,0 +1,25 @@
+[package]
+name = "simd-vectorization-recipes"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Isolated from any parent example workspace and its dependency versions.
+[workspace]
+
+[features]
+default = []
+fearless = ["dep:fearless_simd"]
+wide = ["dep:wide"]
+portable = []
+
+[dependencies]
+fearless_simd = { version = "=0.7.0", optional = true }
+wide = { version = "=1.7.0", optional = true }
+
+[[bin]]
+name = "recipe-bench"
+path = "src/bin/recipe_bench.rs"
+
+[profile.release]
+debug = 1

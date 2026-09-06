@@ -1,0 +1,79 @@
+[
+  {
+    "id": "V01",
+    "name": "masked_modular_sum",
+    "prompt": "Return the sum modulo 2^32 of u32 values selected by a same-length boolean slice.",
+    "contract": "Empty/all-false returns 0; invalid lengths panic.",
+    "private_test_guidance": "all tails; dense/sparse/alternating masks; max values; offsets"
+  },
+  {
+    "id": "V02",
+    "name": "weighted_byte_sum",
+    "prompt": "Sum u8 values times u8 weights into u64 modulo 2^64.",
+    "contract": "Widen before products and before overflow in narrow accumulators.",
+    "private_test_guidance": "255*255; lengths across periodic flush boundaries; offsets"
+  },
+  {
+    "id": "V03",
+    "name": "selected_product",
+    "prompt": "Multiply selected u32 values modulo 2^32, preserving multiplicative identity.",
+    "contract": "Empty/all-false returns 1; nonselected lanes are not zero.",
+    "private_test_guidance": "odd factors; zeros only in unselected lanes; product overflow"
+  },
+  {
+    "id": "V04",
+    "name": "valid_argmin",
+    "prompt": "Return (value, original index) for the first valid minimum.",
+    "contract": "None for empty/all-invalid; equal values choose lower original index.",
+    "private_test_guidance": "sentinel-valued inputs; first/last ties; invalid tail lanes"
+  },
+  {
+    "id": "V05",
+    "name": "segmented_scan",
+    "prompt": "Inclusive u32 wrapping scan, resetting before an element whose reset flag is true.",
+    "contract": "Same-length reset slice; initial carry zero; reset applies before addition.",
+    "private_test_guidance": "resets on either side of vector boundaries; all/none reset; max values"
+  },
+  {
+    "id": "V06",
+    "name": "two_byte_search",
+    "prompt": "Find first of either of two bytes within a specified valid subrange.",
+    "contract": "Index relative to original slice; no overread or required padding.",
+    "private_test_guidance": "equal needles; tiny ranges; page ends; first and last matches"
+  },
+  {
+    "id": "V07",
+    "name": "weighted_histogram",
+    "prompt": "Accumulate u8-indexed u16 weights into 256 u64 counters modulo 2^64.",
+    "contract": "Duplicate indices add all weights; scatter alone is not scatter-add.",
+    "private_test_guidance": "all indices equal; alternating repeats; skewed and uniform distributions"
+  },
+  {
+    "id": "V08",
+    "name": "ordered_batched_dot",
+    "prompt": "Compute four independent f32 dot products from input-major rows.",
+    "contract": "Keep each output addition order and separate mul/add; NaNs compared under declared policy.",
+    "private_test_guidance": "cancellation; subnormals; zero signs; odd batch lengths; layout conversion cost"
+  },
+  {
+    "id": "V09",
+    "name": "hex_classification_subrange",
+    "prompt": "Decode ASCII hexadecimal values in a subrange; output 255 for non-hex bytes.",
+    "contract": "Bytes outside subrange are untouched; preserve result order.",
+    "private_test_guidance": "all 256 byte values; offsets; invalid bytes next to valid boundaries"
+  },
+  {
+    "id": "V10",
+    "name": "selected_fused_statistics",
+    "prompt": "Return count, wrapping u64 sum/sum-squares, optional min/max for selected u32 values.",
+    "contract": "All-false has no extrema; widen before multiplication; input remains unchanged.",
+    "private_test_guidance": "masks and extrema ties; short/large inputs; skew; high register pressure"
+  },
+  {
+    "id": "V11",
+    "name": "exact_score_decision",
+    "prompt": "Optimize a histogram-score sign decision while preserving its scalar-reference result.",
+    "contract": "Approximations need a justified total error enclosure plus reference fallback, or retain exact reference.",
+    "private_test_guidance": "constant close to the reference sum; zeros; LUT boundaries; large counts; cancellation"
+  }
+]
