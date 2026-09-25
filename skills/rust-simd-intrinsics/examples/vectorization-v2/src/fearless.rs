@@ -1,15 +1,13 @@
-//! Numeric reductions composed from Fearless 0.7 primitives.
+//! Fearless 1.0 numeric reducers and composed integer bit reductions.
 use fearless_simd::{dispatch, prelude::*, f32x4, u32x4, Level};
 
 #[inline(always)]
 pub fn reduce_sum4<S: Simd>(v: u32x4<S>) -> u32 {
-    let p = v + v.rotate_elements_left::<2>();
-    (p + p.rotate_elements_left::<1>())[0]
+    v.reduce_sum()
 }
 #[inline(always)]
 pub fn reduce_product4<S: Simd>(v: u32x4<S>) -> u32 {
-    let p = v * v.rotate_elements_left::<2>();
-    (p * p.rotate_elements_left::<1>())[0]
+    v.reduce_product()
 }
 #[inline(always)]
 pub fn reduce_and4<S: Simd>(v: u32x4<S>) -> u32 {
@@ -26,30 +24,27 @@ pub fn reduce_xor4<S: Simd>(v: u32x4<S>) -> u32 {
     let p = v ^ v.rotate_elements_left::<2>();
     (p ^ p.rotate_elements_left::<1>())[0]
 }
-/// A final lane-array epilogue is also a valid missing-primitive implementation.
 #[inline(always)]
 pub fn reduce_min4<S: Simd>(v: u32x4<S>) -> u32 {
-    v.as_slice().iter().copied().min().expect("four lanes")
+    v.reduce_min()
 }
 #[inline(always)]
 pub fn reduce_max4<S: Simd>(v: u32x4<S>) -> u32 {
-    v.as_slice().iter().copied().max().expect("four lanes")
+    v.reduce_max()
 }
 /// Reassociated FP tree; does not preserve a left-to-right scalar fold.
 #[inline(always)]
 pub fn reduce_sum_f32x4<S: Simd>(v: f32x4<S>) -> f32 {
-    let p = v + v.rotate_elements_left::<2>();
-    (p + p.rotate_elements_left::<1>())[0]
+    v.reduce_sum()
 }
 /// Reassociated FP tree, including its overflow/underflow order.
 #[inline(always)]
 pub fn reduce_product_f32x4<S: Simd>(v: f32x4<S>) -> f32 {
-    let p = v * v.rotate_elements_left::<2>();
-    (p * p.rotate_elements_left::<1>())[0]
+    v.reduce_product()
 }
 #[inline(always)]
 fn double_kernel<S: Simd>(simd: S, input: &mut [u32]) {
-    let mut chunks = input.chunks_exact_mut(S::u32s::N);
+    let mut chunks = input.chunks_exact_mut(S::u32s::LEN);
     for c in &mut chunks {
         let v = S::u32s::from_slice(simd, c);
         (v + v).store_slice(c);
@@ -76,7 +71,7 @@ fn product_kernel<S: Simd>(simd: S, input: &[u32]) -> u32 {
 #[inline(always)]
 fn native_sum_kernel<S: Simd, const A: usize>(simd: S, input: &[u32]) -> u32 {
     assert!(matches!(A, 1 | 2 | 4));
-    let lanes = S::u32s::N;
+    let lanes = S::u32s::LEN;
     let mut acc = [S::u32s::splat(simd, 0); A];
     let mut groups = input.chunks_exact(lanes * A);
     for group in &mut groups {
@@ -88,12 +83,12 @@ fn native_sum_kernel<S: Simd, const A: usize>(simd: S, input: &[u32]) -> u32 {
     for c in &mut blocks { acc[0] += S::u32s::from_slice(simd, c); }
     let mut total = acc[0];
     for &a in &acc[1..] { total += a; }
-    // Exactly one scalar-lane epilogue, not one extraction per input block.
-    let sum = total.as_slice().iter().copied().fold(0, u32::wrapping_add);
+    // Reduce once after combining accumulators, then process the scalar tail.
+    let sum = total.reduce_sum();
     blocks.remainder().iter().copied().fold(sum, u32::wrapping_add)
 }
 #[inline(always)]
-fn width<S: Simd>(_: S) -> usize { S::u32s::N }
+fn width<S: Simd>(_: S) -> usize { S::u32s::LEN }
 pub fn native_width(level: Level) -> usize { dispatch!(level, simd => width(simd)) }
 pub fn sum4_at(level: Level, input: &[u32]) -> u32 {
     dispatch!(level, simd => sum4_kernel(simd, input))

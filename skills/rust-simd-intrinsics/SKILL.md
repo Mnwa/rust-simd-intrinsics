@@ -3,14 +3,16 @@ name: rust-simd-intrinsics
 license: MIT
 description: >-
   Design, implement, review, debug, benchmark, and port performance-critical Rust SIMD code across x86/x86_64 SSE (SSE1), SSE2, AVX and AVX2, and Arm NEON. Use for auto-vectorization, runtime feature dispatch, std::arch intrinsics, fearless_simd, wide, or nightly std::simd; and for byte scanning, compression matchers, image/audio/DSP kernels, reductions, masks, widening, saturation, and vectorized transforms. Do not trigger for ordinary non-hot code where SIMD has not been justified by profiling.
-compatibility: >-
-  Stable Rust supports std::arch, wide, and fearless_simd. Nightly Rust with #![feature(portable_simd)] is required for std::simd. Performance conclusions require benchmarks on the actual target CPUs.
 metadata:
-  version: "1.0.0"
-  last-verified: "2026-08-23"
+  version: "1.1.0"
+  last-verified: "2026-09-25"
 ---
 
 # Rust SIMD Intrinsics
+
+## Compatibility
+
+Stable Rust supports `std::arch`, `wide`, and `fearless_simd` (v1 requires Rust 1.89+). Nightly Rust with `#![feature(portable_simd)]` is required for `std::simd`. Performance conclusions require benchmarks on the actual target CPUs.
 
 ## Mission
 
@@ -219,10 +221,13 @@ Treat mask representation as opaque unless the API explicitly defines it. Conver
 
 ### `fearless_simd`
 
-- Put SIMD-generic kernels in `#[inline(always)]` functions as required by the crate design.
+- Target `fearless_simd` 1.0 (Rust 1.89+). Read [the v1 migration and API guidance](references/libraries.md#fearless-v1-migration) when upgrading older code.
+- Prefer `#[simd]` from the separate optional `fearless_simd_macros` 0.1 crate for SIMD-generic functions. Without macros, inline small generic kernels into the dispatch context with `#[inline(always)]`, or enter a `vectorize()` context explicitly.
 - Enter from scalar code through `dispatch!` or a previously selected `Level`.
 - Use `vectorize()` for SIMD-to-SIMD calls when inlining should not be forced.
-- Prefer native-width associated vector types such as `S::u32s` when the algorithm scales with vector width.
+- Prefer native-width associated vector types such as `S::u32s` when the algorithm scales with vector width; use `LEN` for their lane count.
+- Use built-in numeric reducers before composing helpers. FP sum/product have a fixed order for a given vector type and lane count, not across native widths or accumulator layouts.
+- Use `mul_add_precise`/`mul_sub_precise` only when correctly rounded fused semantics are required; ordinary multiply then add has a different rounding contract.
 - Use `kernel!` only for specialized intrinsics not efficiently represented by portable operations.
 - Account for x86 multiversioning code-size growth.
 

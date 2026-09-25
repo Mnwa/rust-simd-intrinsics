@@ -8,12 +8,13 @@ license = "MIT"
 [features]
 default = []
 wide-example = ["dep:wide"]
-fearless-example = ["dep:fearless_simd"]
+fearless-example = ["dep:fearless_simd", "dep:fearless_simd_macros"]
 portable-simd-example = []
 
 [dependencies]
 wide = { version = "=1.6.1", optional = true }
-fearless_simd = { version = "=0.7.0", optional = true }
+fearless_simd = { version = "=1.0.0", optional = true }
+fearless_simd_macros = { version = "=0.1.0", optional = true }
 
 [profile.release]
 opt-level = 3

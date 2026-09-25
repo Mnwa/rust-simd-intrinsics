@@ -1,8 +1,8 @@
 # Executable vectorization recipes
 
-Independent workspace; it does not update the original examples or their
-libraries. Exact top-level pins: Fearless 0.7.0, wide 1.7.0. Portable SIMD is an
-optional nightly feature. This patch contains no fabricated Cargo.lock.
+Independent workspace. Exact top-level pins: Fearless 1.0.0, wide 1.7.0.
+The original examples also use Fearless 1.0.0; the workspaces retain separate
+dependency resolutions. Portable SIMD is an optional nightly feature.
 
 ```bash
 # First connected run; only creates missing locks. Review and commit the lock.
@@ -25,7 +25,7 @@ reproducibility and record it via `--nightly-toolchain nightly-YYYY-MM-DD`.
 |---|---|---|
 | scalar | all oracles, private histogram | optimized scalar-written baselines; no disabled autovec |
 | arch | u32 sum, widened byte sum, prefix scan, byte search | checked SSE2/AVX2/NEON; no overread |
-| fearless | fixed reducer trees, native 1/2/4 accumulators, four outputs, histogram score | modulo u32; scalar epilogue allowed |
+| fearless | built-in numeric reducers, bitwise trees, native 1/2/4 accumulators, four outputs, histogram score | modulo u32; explicit FP reduction order |
 | wide_examples | f32x8 sum and product | explicitly reassociated FP |
 | portable | min/index reductions, scan, masks, filter, Hamming, hex, ASCII, sort4, Adler, stencil, statistics | nightly, explicit tails and oracle comparisons |
 | math | bounded u32 log2 and histogram score | approximate score, not exact-sign replacement |

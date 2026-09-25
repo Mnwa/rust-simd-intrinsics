@@ -2,12 +2,12 @@
 //! `fearless_simd`.
 
 use fearless_simd::{Level, dispatch, prelude::*};
+use fearless_simd_macros::simd;
 
-/// The generic kernel is always inlined into each selected implementation
-/// level, as required by the crate's design.
+/// Without the optional macro, inline the kernel into the dispatch context.
 #[inline(always)]
 fn double_u32s_kernel<S: Simd>(simd: S, values: &mut [u32]) {
-    let mut chunks = values.chunks_exact_mut(S::u32s::N);
+    let mut chunks = values.chunks_exact_mut(S::u32s::LEN);
 
     for chunk in &mut chunks {
         let value = S::u32s::from_slice(simd, chunk);
@@ -27,7 +27,7 @@ pub fn double_u32s(values: &mut [u32]) {
 
 /// Scalar-looking loop that `fearless_simd` multiversions for LLVM
 /// auto-vectorization.
-#[inline(always)]
+#[simd]
 fn xor_with_key_kernel<S: Simd>(_: S, bytes: &mut [u8], key: u8) {
     for byte in bytes {
         *byte ^= key;

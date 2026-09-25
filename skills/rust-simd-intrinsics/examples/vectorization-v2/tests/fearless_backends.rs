@@ -56,6 +56,37 @@ fn independent_outputs_preserve_arithmetic_graph() {
 }
 
 #[test]
+fn v1_float_contracts_at_every_supported_level() {
+    use fearless_simd::{dispatch, f32x4, prelude::*};
+    #[inline(always)]
+    fn probe<S: Simd>(simd: S) -> [u32; 4] {
+        let mixed = f32x4::from_slice(simd, &[f32::NAN, -3.0, 2.0, f32::NAN]);
+        assert_eq!(mixed.reduce_min_precise(), -3.0);
+        assert_eq!(mixed.reduce_max_precise(), 2.0);
+        let nan = f32x4::splat(simd, f32::NAN);
+        assert!(nan.reduce_min_precise().is_nan());
+        assert!(nan.reduce_max_precise().is_nan());
+        // The exact residual is lost by a separately rounded multiply.
+        let a = f32x4::splat(simd, 1.0 + f32::EPSILON);
+        let b = f32x4::splat(simd, 1.0 - f32::EPSILON);
+        let one = f32x4::splat(simd, 1.0);
+        let residual = -f32::EPSILON * f32::EPSILON;
+        assert_eq!(a.mul_add_precise(b, -one).to_array(), [residual; 4]);
+        assert_eq!(a.mul_sub_precise(b, one).to_array(), [residual; 4]);
+        let cancellation = f32x4::from_slice(simd, &[1e20, 1.0, -1e20, 1.0]);
+        let product = f32x4::from_slice(simd, &[1e20, 1e-20, 1e20, 1e-20]);
+        let zero = f32x4::from_slice(simd, &[-0.0, 0.0, -0.0, 0.0]);
+        let tiny = f32x4::splat(simd, f32::from_bits(1));
+        [cancellation.reduce_sum().to_bits(), product.reduce_product().to_bits(),
+            zero.reduce_sum().to_bits(), tiny.reduce_sum().to_bits()]
+    }
+    let expected = dispatch!(Level::baseline(), simd => probe(simd));
+    for level in supported_levels() {
+        assert_eq!(dispatch!(level, simd => probe(simd)), expected);
+    }
+}
+
+#[test]
 fn score_paths_at_every_supported_level() {
     use simd_vectorization_recipes::math;
     let table = math::log_table();

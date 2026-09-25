@@ -39,7 +39,8 @@ SUPPLEMENTS={
 
 Read [the API matrix](api-capabilities.md) before choosing or naming methods.
 `std::simd` uses `reduce_product`, `wide::f32x8` uses `reduce_mul`, and the
-Fearless 0.7 examples supply numeric reducers while reusing built-in mask reducers.
+Fearless 1.0 provides numeric and mask reducers; integer bit reductions still use
+composed helpers.
 A `#[target_feature]` annotation on a caller does not re-evaluate `wide`'s compiled
 `cfg(target_feature)` branches. Prefer a measured portable kernel plus a small
 specialized helper when a single operation is missing.

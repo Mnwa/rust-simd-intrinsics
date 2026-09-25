@@ -57,7 +57,7 @@ rust-simd-intrinsics/
 
 ## Toolchains
 
-The core and `wide`/`fearless_simd` examples target stable Rust; the pinned `fearless_simd` 0.7.0 example requires Rust 1.89 or newer. The `std::simd` module is feature-gated and requires nightly Rust with `portable_simd`.
+The core and `wide`/`fearless_simd` examples target stable Rust; the pinned `fearless_simd` 1.0.0 example requires Rust 1.89 or newer. The `std::simd` module is feature-gated and requires nightly Rust with `portable_simd`.
 
 ## Validate
 

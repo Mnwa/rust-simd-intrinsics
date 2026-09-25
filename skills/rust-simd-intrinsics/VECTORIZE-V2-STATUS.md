@@ -1,6 +1,30 @@
 # Vectorization v2 — delivery and validation status
 
-Prepared on 2026-09-06 for `Mnwa/rust-simd-intrinsics`.
+## Fearless 1.0 update — 2026-09-25
+
+Both example workspaces now pin `fearless_simd` 1.0.0. The original examples
+also demonstrate `fearless_simd_macros` 0.1.0. The recipe lockfile was generated
+by Cargo from the registry. Numeric reductions use the v1 built-ins; bitwise
+reductions retain composed helpers. No speedup is claimed.
+
+Validation on `aarch64-apple-darwin`:
+
+- `scripts/verify.sh`: passed structure, original formatting, and all available
+  stable/nightly tests.
+- Recipe release tests with `fearless,wide`: 13 passed on Rust 1.98.1.
+- Recipe release tests with `fearless,wide,portable`: 19 passed on nightly
+  1.100.0 (`330d31712`, 2026-09-17).
+- Rust 1.89.0: original Fearless release tests (9) and recipe Fearless debug
+  tests (12) passed, including the macro and wrapping arithmetic.
+- Both workspaces' Fearless features passed `cargo check --all-targets` for
+  `x86_64-unknown-linux-gnu`; x86 runtime and Linux guard-page tests were not run.
+- Python tooling: 15 tests passed, including the updated integration generator.
+- `quick_validate.py` from the installed skill-creator: passed. Environment
+  requirements now live in the Compatibility section of `SKILL.md`, rather than
+  the unsupported `compatibility` frontmatter key.
+
+The following sections record the original preparation on 2026-09-06 and its
+limitations at that time; they do not describe the v1 validation above.
 
 ## Read this before applying
 

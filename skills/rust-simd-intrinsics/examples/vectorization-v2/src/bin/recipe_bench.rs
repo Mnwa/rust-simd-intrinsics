@@ -67,9 +67,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         bench!("sum_u32","fearless_selected_1acc",u64::from(f::sum_at::<1>(level,black_box(&data))));
         bench!("sum_u32","fearless_selected_2acc",u64::from(f::sum_at::<2>(level,black_box(&data))));
         bench!("sum_u32","fearless_selected_4acc",u64::from(f::sum_at::<4>(level,black_box(&data))));
-        bench!("sum_u32","fearless_fixed4_tree",u64::from(f::sum4_at(level,black_box(&data))));
+        bench!("sum_u32","fearless_fixed4_builtin",u64::from(f::sum4_at(level,black_box(&data))));
         bench!("product_u32","scalar_autovec",u64::from(scalar::product_wrapping(black_box(&data))));
-        bench!("product_u32","fearless_fixed4_tree",u64::from(f::product_at(level,black_box(&data))));
+        bench!("product_u32","fearless_fixed4_builtin",u64::from(f::product_at(level,black_box(&data))));
     }
     #[cfg(feature="portable")]
     {

@@ -18,7 +18,9 @@ Use only one abstraction inside a kernel unless an instruction unavailable in th
 
 ## 2. `fearless_simd`
 
-Observed crate version: `0.7.0`.
+Verified on 2026-09-25: `fearless_simd` 1.0.0 and optional
+`fearless_simd_macros` 0.1.0, both requiring Rust 1.89+. Other library
+observations in this reference retain their original verification dates.
 
 ### Best fit
 
@@ -31,7 +33,12 @@ Current documented implementation levels include:
 - x86-64-v2 / SSE4.2-class level.
 - x86-64-v3 / AVX2-class level.
 - AArch64 NEON.
-- Additional higher x86 levels where the crate and target support them.
+- Ice Lake-class AVX-512 (512-bit native vectors).
+- WebAssembly SIMD128 when enabled at compile time.
+
+`Level::new()` caches x86 detection. `Level::baseline()` uses the ambient
+baseline (for example SSE2 or AArch64 NEON); scalar `Fallback` may be absent.
+Enable `force_support_fallback` only when a test needs that backend explicitly.
 
 Do not infer that every operation exists at every level. The trait bounds and generated vector types remain the API contract.
 
@@ -55,7 +62,7 @@ pub fn double(values: &mut [u32]) {
 
 Rules:
 
-- Put `#[inline(always)]` on the generic kernel as recommended by the crate so it is specialized inside each dispatched version.
+- This is the macro-free pattern: inline the generic kernel into each dispatched version. For new code, the optional `#[simd]` pattern below manages the target-feature context itself.
 - Keep `Level::new()` and `dispatch!` outside the hot loop.
 - Use explicit overflow operations in scalar-looking integer code.
 - Inspect binary size. Each dispatched version duplicates code.
@@ -108,10 +115,82 @@ pub fn process_batch(/* ... */) {
 
 ### Pitfalls
 
-- A generic `S: Simd` function that is not inlined may lose specialization opportunities.
+- A generic `S: Simd` function needs a target-feature context: use `#[simd]`, `vectorize()`, or inlining into the dispatched caller. A token argument alone does not enable code generation for its features.
 - Multiversioning a very large call graph can cause code-size and instruction-cache regressions.
 - `Level::new()` chooses a supported implementation level; it does not prove that a particular raw intrinsic extension beyond that level is available.
 - Do not cache a process-wide level in complicated unsafe initialization unless measurement shows construction matters. Prefer simple ownership and dispatch first.
+
+<a id="fearless-v1-migration"></a>
+
+### v1 migration and new operations
+
+The [1.0 release notes](https://github.com/linebender/fearless_simd/blob/v1.0.0/CHANGELOG.md)
+and [versioned API](https://docs.rs/fearless_simd/1.0.0/fearless_simd/)
+define these changes from 0.7:
+
+| Older API | v1 replacement |
+|---|---|
+| `SimdBase::N`, `SimdMask::N` | `LEN` |
+| `witness()` | `ExtractToken::token()`; also available through `prelude::*` |
+| owned `as_array()` | `to_array()` |
+| `as_array_ref()`, `as_array_mut()` | borrowing `as_array()`, `as_mut_array()` |
+| `SimdFloat::abs` | `SimdBase::abs`; signed integer minimum wraps, unsigned values are unchanged |
+
+Prefer `reduce_sum`, `reduce_product`, `reduce_min` and `reduce_max` over custom
+numeric helpers. Integer sum/product wrap. Floating sum/product use a fixed
+reduction order across backends for the **same vector type and lane count**,
+except for NaN payloads. This does not preserve a scalar left fold or guarantee
+identical slice results when native width or accumulator count changes.
+`reduce_min_precise`/`reduce_max_precise` ignore quiet NaNs unless all lanes are
+quiet NaNs; signaling-NaN behavior is implementation-defined. Check signed-zero
+requirements separately. Integer `reduce_and/or/xor` still need composed helpers.
+
+For fused arithmetic with one final rounding, use `mul_add_precise` or
+`mul_sub_precise`; they also work without hardware FMA, where emulation may be
+costly. Ordinary `mul_add`/`mul_sub` can fuse differently across backends. Neither
+form is a drop-in replacement for a required separate multiply and add.
+
+Integer vectors now provide `saturating_add`, `saturating_sub`, `count_ones` and
+`count_zeros`. Population counts retain the input vector type, including signed
+types; widen before accumulating when narrow lanes could overflow. All vectors
+and masks support `reverse`; masks also support wrapping element rotations.
+Scalar-generic code can select vectors with `<T as SimdIntElement>::Native<S>`
+or `<T as SimdFloatElement>::Native<S>` rather than enumerating scalar types.
+
+### Optional `#[simd]` pattern
+
+Add `fearless_simd = "1.0"` and `fearless_simd_macros = "0.1"` to the project.
+The macro crate is versioned separately and is not a core-library dependency.
+
+```rust
+use fearless_simd::{dispatch, prelude::*, Level};
+use fearless_simd_macros::simd;
+
+#[simd]
+fn double_kernel<S: Simd>(simd: S, values: &mut [u32]) {
+    let mut chunks = values.chunks_exact_mut(S::u32s::LEN);
+    for chunk in &mut chunks {
+        let value = S::u32s::from_slice(simd, chunk);
+        (value + value).store_slice(chunk);
+    }
+    for value in chunks.into_remainder() {
+        *value = value.wrapping_mul(2);
+    }
+}
+
+pub fn double(values: &mut [u32]) {
+    dispatch!(Level::new(), simd => double_kernel(simd, values));
+}
+```
+
+The first non-receiver argument must carry a token via `ExtractToken`: a token,
+vector, mask, reference, or custom wrapper. `#[simd]` enters that token's feature
+context; it does not discover the CPU or replace the outer `Level` selection.
+Separate named helpers need their own annotation/context or suitable inlining.
+A returned lazy iterator, closure, or future executes outside this context.
+The macro cannot annotate `async` or `const` functions. See the
+[macro documentation](https://docs.rs/fearless_simd_macros/0.1.0/fearless_simd_macros/)
+for the remaining signature restrictions.
 
 ## 3. `wide`
 

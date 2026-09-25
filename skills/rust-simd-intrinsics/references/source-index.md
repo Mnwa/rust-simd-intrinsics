@@ -53,7 +53,12 @@ Observed on 2026-08-23: nightly docs identified Rust 1.100.0-nightly dated 2026-
 - Repository: <https://github.com/linebender/fearless_simd>
 - crates.io: <https://crates.io/crates/fearless_simd>
 
-Observed on 2026-08-23: crate version `0.7.0`, published 2026-08-11. Re-check its MSRV, implementation-level list, and API examples before updating pins.
+Verified on 2026-09-25: `fearless_simd` 1.0.0, released 2026-09-21, and
+`fearless_simd_macros` 0.1.0. Both declare Rust 1.89 as their MSRV.
+
+- Versioned core API: <https://docs.rs/fearless_simd/1.0.0/fearless_simd/>
+- Versioned macro guidance: <https://docs.rs/fearless_simd_macros/0.1.0/fearless_simd_macros/>
+- Release and migration details: <https://github.com/linebender/fearless_simd/blob/v1.0.0/CHANGELOG.md>
 
 ## `wide`
 

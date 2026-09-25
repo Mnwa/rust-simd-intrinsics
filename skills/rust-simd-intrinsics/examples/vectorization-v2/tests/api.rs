@@ -26,6 +26,42 @@ fn fearless_reduction_and_mask_api() {
     dispatch!(level, simd => probe(simd));
 }
 
+#[cfg(feature = "fearless")]
+#[test]
+fn fearless_v1_arrays_tokens_and_integer_operations() {
+    use fearless_simd::{dispatch, i32x4, prelude::*, u32x4, Level};
+    #[inline(always)]
+    fn probe<S: Simd>(simd: S) {
+        assert_eq!(u32x4::<S>::LEN, 4);
+        let mut v = u32x4::from_slice(simd, &[0, 1, 3, u32::MAX]);
+        let borrowed: &[u32; 4] = v.as_array();
+        assert_eq!(*borrowed, [0, 1, 3, u32::MAX]);
+        v.as_mut_array()[1] = 2;
+        let owned: [u32; 4] = v.to_array();
+        assert_eq!(owned, [0, 2, 3, u32::MAX]);
+        assert_eq!(v.reverse().to_array(), [u32::MAX, 3, 2, 0]);
+        assert_eq!(v.count_ones().to_array(), owned.map(u32::count_ones));
+        assert_eq!(v.count_zeros().to_array(), owned.map(u32::count_zeros));
+        let one = u32x4::splat(v.token(), 1);
+        assert_eq!(v.saturating_add(one).to_array(), owned.map(|x| x.saturating_add(1)));
+        assert_eq!(v.saturating_sub(one).to_array(), owned.map(|x| x.saturating_sub(1)));
+        let signed = [i32::MIN, -1, 0, i32::MAX];
+        let signed_v = i32x4::from_slice(simd, &signed);
+        assert_eq!(signed_v.abs().to_array(), signed.map(i32::wrapping_abs));
+        let signed_counts: i32x4<S> = signed_v.count_ones();
+        assert_eq!(signed_counts.to_array(), signed.map(|x| x.count_ones() as i32));
+        let mask = v.simd_eq(u32x4::splat(simd, 0));
+        assert_eq!(mask.reverse().to_bitmask(), 8);
+        assert_eq!(mask.rotate_elements_right::<1>().to_bitmask(), 2);
+        assert_eq!(mask.rotate_elements_left::<1>().to_bitmask(), 8);
+        let native = <u32 as SimdIntElement>::Native::<S>::splat(mask.token(), 2);
+        assert_eq!(native.reduce_sum(), 2 * S::u32s::LEN as u32);
+        let floats = <f32 as SimdFloatElement>::Native::<S>::splat(simd, 1.0);
+        assert_eq!(floats.reduce_product(), 1.0);
+    }
+    dispatch!(Level::new(), simd => probe(simd));
+}
+
 #[cfg(feature = "wide")]
 #[test]
 fn wide_concrete_f32x8_reducers() {

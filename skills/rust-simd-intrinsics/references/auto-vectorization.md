@@ -181,7 +181,7 @@ fn transform_lane(x: u32) -> u32 {
 
 Avoid forcing `#[inline(always)]` everywhere. It can increase code size and register pressure. Exceptions:
 
-- `fearless_simd` explicitly requires `#[inline(always)]` for its generic SIMD kernels.
+- `fearless_simd` 1.0 recommends the optional `#[simd]` attribute. Macro-free generic kernels can use `#[inline(always)]` to enter their caller's SIMD context; see [library guidance](libraries.md#fearless-v1-migration).
 - Tiny helpers proven not to inline and proven to block vectorization may justify it.
 
 `#[target_feature]` functions cannot use `#[inline(always)]`.

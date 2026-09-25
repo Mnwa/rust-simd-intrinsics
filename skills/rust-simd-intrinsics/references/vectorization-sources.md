@@ -4,14 +4,16 @@ Research context: 2026-09-06. Versioned APIs below are the intended compilation
 pins. These links document the recommendations; unversioned branch links are
 explicitly not a claim that their current SHA was fetched for this patch. The
 preparation environment could not retrieve the target repository or install a
-Rust toolchain. See `VECTORIZE-V2-STATUS.md` for exact verification limits.
+Rust toolchain. Fearless entries were updated against the 1.0.0 release and
+compiled registry sources on 2026-09-25. See `VECTORIZE-V2-STATUS.md` for the
+current checks and the historical preparation limits.
 
 | ID | Primary source | Used for |
 |---|---|---|
 | R1 | https://doc.rust-lang.org/std/simd/num/trait.SimdFloat.html | FP reducers, NaN and signed zero |
 | R2 | https://doc.rust-lang.org/std/simd/num/trait.SimdUint.html | integer reducers, casts |
-| R3 | https://docs.rs/fearless_simd/0.7.0/fearless_simd/trait.SimdBase.html | vector construction and permutations |
-| R4 | https://docs.rs/fearless_simd/0.7.0/fearless_simd/trait.SimdMask.html | mask reductions and bit order |
+| R3 | https://docs.rs/fearless_simd/1.0.0/fearless_simd/trait.SimdBase.html | vector construction, permutations and numeric reducers |
+| R4 | https://docs.rs/fearless_simd/1.0.0/fearless_simd/trait.SimdMask.html | mask reductions and bit order |
 | R5 | https://github.com/Lokathor/wide/blob/main/src/f32x8_.rs | reducers and compile-time representation |
 | R6 | https://docs.rs/wide/1.7.0/wide/struct.f32x8.html | concrete wide API |
 | R7 | https://llvm.org/docs/Vectorizers.html | loop/SLP diagnostics, reductions, unrolling |
@@ -27,6 +29,8 @@ Rust toolchain. See `VECTORIZE-V2-STATUS.md` for exact verification limits.
 | R17 | https://doc.rust-lang.org/rustc/codegen-options/index.html | remarks and codegen flags |
 | R18 | https://doc.rust-lang.org/cargo/reference/config.html | flag precedence and Cargo config |
 | R19 | https://doc.rust-lang.org/std/simd/struct.Simd.html | scatter is not scatter-add |
+| R20 | https://github.com/linebender/fearless_simd/blob/v1.0.0/CHANGELOG.md | v1 migration, additions and numeric contracts |
+| R21 | https://docs.rs/fearless_simd_macros/0.1.0/fearless_simd_macros/ | optional `#[simd]`, token carriers and execution boundaries |
 
 No external source code, tables or polynomial coefficients are copied. Local
 examples are original educational implementations of the described algorithms.

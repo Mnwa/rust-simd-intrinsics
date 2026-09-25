@@ -38,9 +38,9 @@ using arbitrary hardware min/max instructions is not automatically equivalent.
 4. Consider a small ISA helper behind existing dispatch. The rest of the kernel
    should stay portable if only the reducer needs specialization.
 
-The complete Fearless implementations are in `examples/vectorization-v2/src/fearless.rs`. They include fixed u32x4 trees and native-width accumulation with
+The complete Fearless implementations are in `examples/vectorization-v2/src/fearless.rs`. They use v1 built-in numeric reducers, composed bitwise trees, and native-width accumulation with
 1/2/4 independent accumulators. The generic accumulator count is a normal const
-parameter; no unsupported expression such as `::<{V::N / 2}>` is required.
+parameter; no unsupported expression such as `::<{V::LEN / 2}>` is required.
 
 The raw SSE2 and NEON widened-byte implementations in `arch.rs` are deliberately
 small specializations. The SSE2 path uses SAD against zero, not a wrapping u8

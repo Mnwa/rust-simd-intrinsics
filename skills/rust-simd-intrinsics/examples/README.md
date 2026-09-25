@@ -9,14 +9,15 @@ around vector-width boundaries.
 - `autovec`: ordinary scalar Rust shaped for LLVM Loop/SLP vectorization.
 - `std_arch`: runtime-dispatched SSE (SSE1), SSE2, AVX, AVX2, and AArch64 NEON kernels.
 - `wide_impl`: stable fixed-width `wide::f32x8` chunks (`wide-example`).
-- `fearless_impl`: safe runtime multiversioning with `fearless_simd`
+- `fearless_impl`: safe runtime multiversioning with `fearless_simd` 1.0.0;
+  manual inlining and `#[simd]` from `fearless_simd_macros` 0.1.0
   (`fearless-example`).
 - `portable_simd`: nightly `std::simd` (`portable-simd-example`).
 
 ## Toolchain requirements
 
 - Base `std::arch` and auto-vectorization examples: current stable Rust.
-- `fearless-example`: Rust 1.89 or newer, matching the observed `fearless_simd` 0.7.0 MSRV.
+- `fearless-example`: Rust 1.89 or newer, matching the observed `fearless_simd` 1.0.0 MSRV.
 - `portable-simd-example`: a nightly toolchain with `portable_simd`.
 
 ## Stable checks

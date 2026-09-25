@@ -15,7 +15,7 @@ wide = ["dep:wide"]
 portable = []
 
 [dependencies]
-fearless_simd = { version = "=0.7.0", optional = true }
+fearless_simd = { version = "=1.0.0", optional = true }
 wide = { version = "=1.7.0", optional = true }
 
 [[bin]]
